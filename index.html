@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>The Gate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #9A6B2E;
+    --gold-dim: #7A5220;
+    --gold-glow: rgba(154,107,46,0.07);
+    --bg: #FFFFFF;
+    --surface: #F7F5F2;
+    --surface2: #F0EDE8;
+    --border: #E4E0D8;
+    --border2: #D4CFC6;
+    --text: #1A1814;
+    --muted: #6B6560;
+    --dim: #B0AB9F;
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'DM Sans', system-ui, sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  header {
+    padding: 32px 24px 22px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .accent-bar {
+    width: 2px;
+    height: 32px;
+    background: var(--gold);
+    flex-shrink: 0;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-size: 2.4rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .tagline {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-left: 14px;
+  }
+
+  /* ── Nav ── */
+  nav {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    flex-shrink: 0;
+  }
+  .tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 14px 16px 12px;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+    position: relative;
+  }
+  .tab.active { color: var(--text); border-bottom-color: var(--gold); }
+  .tab:focus { outline: none; }
+  .run-count {
+    background: var(--gold);
+    color: #FFFFFF;
+    font-size: 9px;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 20px;
+    margin-left: 5px;
+    vertical-align: 1px;
+  }
+
+  /* ── Panels ── */
+  .panel { display: none; padding: 28px 24px 60px; flex: 1; }
+  .panel.active { display: block; }
+
+  /* ── Form ── */
+  .field { margin-bottom: 20px; }
+  label {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 9px;
+    font-weight: 500;
+  }
+  textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.65;
+    padding: 14px 16px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+    border-radius: 2px;
+    -webkit-appearance: none;
+  }
+  textarea:focus { border-color: var(--gold); }
+  textarea::placeholder { color: var(--dim); font-style: italic; }
+
+  /* ── Buttons ── */
+  .btn-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+
+  .btn-primary {
+    background: var(--gold);
+    border: none;
+    color: #FFFFFF;
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    padding: 14px 28px;
+    text-transform: uppercase;
+    transition: opacity 0.15s, transform 0.1s;
+    border-radius: 1px;
+    -webkit-appearance: none;
+  }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-primary:focus { outline: none; }
+
+  .btn-ghost {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 14px 10px;
+    transition: color 0.15s;
+    -webkit-appearance: none;
+  }
+  .btn-ghost:hover { color: var(--text); }
+  .btn-ghost:focus { outline: none; }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    border: 1.5px solid var(--border2);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+    vertical-align: -2px;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Response ── */
+  .response-wrap {
+    margin-top: 32px;
+    animation: fadein 0.3s ease;
+  }
+  @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .response-box {
+    border-left: 2px solid var(--gold);
+    border-top: 1px solid var(--border2);
+    border-right: 1px solid var(--border2);
+    border-bottom: 1px solid var(--border2);
+    padding: 24px 22px 28px;
+    background: var(--gold-glow);
+    border-radius: 0 2px 2px 0;
+  }
+  .response-label {
+    font-size: 9px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+    margin-bottom: 16px;
+  }
+  .verdict-badge {
+    display: inline-block;
+    font-family: var(--sans);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    font-weight: 500;
+    padding: 4px 14px;
+    margin-bottom: 16px;
+    border-radius: 1px;
+  }
+  .verdict-go { background: rgba(30,120,60,0.08); color: #1a7a40; border: 1px solid rgba(30,120,60,0.22); }
+  .verdict-hold { background: rgba(154,107,46,0.1); color: var(--gold); border: 1px solid rgba(154,107,46,0.28); }
+  .verdict-dont { background: rgba(170,40,40,0.08); color: #b03030; border: 1px solid rgba(170,40,40,0.22); }
+
+  .response-text {
+    font-family: var(--serif);
+    font-size: 19px;
+    line-height: 1.72;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+
+  /* ── Contract tab ── */
+  .contract-intro {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 17px;
+    line-height: 1.72;
+    color: var(--muted);
+    margin-bottom: 22px;
+  }
+  .save-notice {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .note {
+    font-size: 11px;
+    color: var(--dim);
+    line-height: 1.65;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── API Key setup ── */
+  .setup-box {
+    border: 1px solid var(--border2);
+    padding: 24px;
+    margin-bottom: 28px;
+    background: var(--surface2);
+    border-radius: 2px;
+  }
+  .setup-title {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .setup-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 16px;
+  }
+  .setup-desc a { color: var(--gold); text-decoration: none; }
+  input[type="password"], input[type="text"] {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    padding: 12px 14px;
+    outline: none;
+    margin-bottom: 12px;
+    border-radius: 2px;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus { border-color: var(--gold); }
+  input::placeholder { color: var(--dim); }
+
+  /* ── About ── */
+  .about-body p {
+    font-family: var(--serif);
+    font-size: 18px;
+    line-height: 1.75;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+  .about-sub {
+    color: var(--muted);
+    font-size: 15px;
+    font-style: italic;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--dim);
+    padding: 20px 24px 32px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="logo-row">
+      <div class="accent-bar"></div>
+      <h1>The Gate</h1>
+    </div>
+    <div class="tagline">Pre-decision audit &mdash; The honest mirror</div>
+  </header>
+
+  <nav>
+    <button class="tab active" id="tab-btn-gate" onclick="showTab('gate')">Gate</button>
+    <button class="tab" id="tab-btn-contract" onclick="showTab('contract')">Contract</button>
+    <button class="tab" id="tab-btn-settings" onclick="showTab('settings')">Settings</button>
+    <button class="tab" id="tab-btn-about" onclick="showTab('about')">About</button>
+  </nav>
+
+  <!-- ── GATE PANEL ── -->
+  <div class="panel active" id="panel-gate">
+    <div class="field">
+      <label>The decision or impulse</label>
+      <textarea id="decision" rows="4" placeholder="Name the decision plainly. What are you actually considering?"></textarea>
+    </div>
+    <div class="field">
+      <label>What is pulling you toward it</label>
+      <textarea id="pull" rows="2" placeholder="Optional. Name the engine."></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="run-btn" onclick="runGate()">Run the gate</button>
+      <button class="btn-ghost" id="clear-btn" onclick="clearGate()" style="display:none">Clear</button>
+    </div>
+
+    <div id="response-wrap" class="response-wrap" style="display:none">
+      <div class="response-box">
+        <div class="response-label">The mirror</div>
+        <div id="verdict-badge" style="display:none"></div>
+        <div class="response-text" id="response-text"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CONTRACT PANEL ── -->
+  <div class="panel" id="panel-contract">
+    <p class="contract-intro">Your commitments to yourself. The reference the gate measures every decision against. Edit it to be true, not aspirational. Reread and revise once a quarter.</p>
+    <div class="field">
+      <textarea id="contract-edit" rows="32" style="font-size:13px;line-height:1.8" placeholder="Write your commitments here. Use sections and numbered clauses. The gate will measure every decision against exactly this text."></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="saveContract()">Save contract</button>
+      <span class="save-notice" id="save-notice" style="display:none"></span>
+    </div>
+    <p class="note">Your contract is saved to your browser&rsquo;s local storage. It is sent with every gate run as the reference for the mirror. It never leaves your device except as context in your API calls.</p>
+  </div>
+
+  <!-- ── SETTINGS PANEL ── -->
+  <div class="panel" id="panel-settings">
+    <div class="setup-box">
+      <div class="setup-title">Anthropic API Key</div>
+      <p class="setup-desc">The Gate calls the Claude API directly from your browser. Your key is stored locally on this device only and is never sent anywhere except to <strong>api.anthropic.com</strong>.<br><br>Get a key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
+      <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+      <div class="btn-row">
+        <button class="btn-primary" onclick="saveApiKey()">Save key</button>
+        <button class="btn-ghost" onclick="clearApiKey()">Clear key</button>
+        <span class="save-notice" id="key-notice" style="display:none"></span>
+      </div>
+    </div>
+    <p class="note">Each gate run uses approximately 600&ndash;900 tokens. At standard Claude Sonnet pricing this is a fraction of a cent per run.</p>
+  </div>
+
+  <!-- ── ABOUT PANEL ── -->
+  <div class="panel" id="panel-about">
+    <div class="about-body">
+      <p>This is not a productivity tool. It is a coherence tool.</p>
+      <p>Most costly decisions, in business, in money, in marriage, in private appetites, follow the same engine. Instinct first. System second. By the time the system kicks in, the cost has already landed.</p>
+      <p>The gate runs the other way. You post the impulse before you act on it. The mirror runs it against your stated contract and your known patterns and gives you the honest read. Not permission. Not refusal. The actual call.</p>
+      <p>Use it for decisions that would normally bypass your better judgment. Investments. Hires. Conversations you are avoiding. Desires you are rationalising. Not for trivial choices.</p>
+      <p class="about-sub">The gate is only as honest as the contract. Edit the contract to be true. Update it when the man you are evolves. Run the gate before the appetite runs you.</p>
+    </div>
+  </div>
+
+  <footer>Build evidence, not validation</footer>
+</div>
+
+<script>
+const STORAGE_KEYS = {
+  contract: 'gate_contract_v1',
+  apiKey: 'gate_apikey_v1',
+  runCount: 'gate_count_v1'
+};
+
+const DEFAULT_CONTRACT = '';
+
+let contract = DEFAULT_CONTRACT;
+let apiKey = '';
+let runCount = 0;
+
+function ls(key, val) {
+  if (val === undefined) {
+    try { return localStorage.getItem(key); } catch(e) { return null; }
+  }
+  try { localStorage.setItem(key, val); } catch(e) {}
+}
+
+function init() {
+  const saved = ls(STORAGE_KEYS.contract);
+  if (saved) contract = saved;
+  const key = ls(STORAGE_KEYS.apiKey);
+  if (key) { apiKey = key; document.getElementById('api-key-input').value = key; }
+  const count = ls(STORAGE_KEYS.runCount);
+  if (count) runCount = parseInt(count) || 0;
+  document.getElementById('contract-edit').value = contract;
+  updateCounter();
+}
+
+function updateCounter() {
+  const btn = document.getElementById('tab-btn-gate');
+  const ex = btn.querySelector('.run-count');
+  if (ex) ex.remove();
+  if (runCount > 0) {
+    const span = document.createElement('span');
+    span.className = 'run-count';
+    span.textContent = runCount;
+    btn.appendChild(span);
+  }
+}
+
+function showTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('tab-btn-' + name).classList.add('active');
+}
+
+function buildSystemPrompt(c) {
+  return `You are the user's Decision Gate. A sharp, honest mirror they come to before making impulse decisions. Speak direct, layered, calm authority. No fluff. Plain human language.
+
+The user's contract below is the authoritative source of their personal architecture, patterns, values, and commitments. Treat it as the reference for everything you evaluate.
+
+THE THREE GATE QUESTIONS to run every decision through:
+1. Is this aligned with the contract?
+2. What will they feel about this 48 hours from now?
+3. Are they running toward something, or running away from something?
+
+THE USER'S CONTRACT:
+${c}
+
+HOW TO RESPOND:
+Open with one sharp hook line that names what is actually happening before any analysis.
+Run the three gate questions briefly. Not as a checklist lecture.
+Identify which engine is running. Heat picking. Validation seeking. Escape. Fatigue. Ego. Genuine alignment. Name it plainly.
+Cite at least one specific clause by section and number where it directly applies. Use citations sparingly.
+Name the specific cost of taking this decision if they go ahead.
+End with a clear verdict on its own line: VERDICT: GO, VERDICT: HOLD, or VERDICT: DON'T
+
+RULES:
+Never moralise. Never preach. Never apologise for being sharp.
+Never give permission for actions that contradict the contract.
+Don't soften. They came here to bypass their own softening.
+Never use em-dashes. Use plain prose with periods, commas, or new sentences.
+Use vocabulary that matches their voice: system, gate, contract, engine, coherence tax, room, heat, alignment.
+Length: 200 to 350 words. Sharp. Not a lecture.
+Be the audit function. Not a friend.`;
+}
+
+async function runGate() {
+  const decision = document.getElementById('decision').value.trim();
+  const pull = document.getElementById('pull').value.trim();
+  if (!decision) { alert('Name the decision first.'); return; }
+  if (!apiKey) { showTab('settings'); alert('Add your Anthropic API key in Settings first.'); return; }
+
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Running the gate...';
+
+  document.getElementById('response-wrap').style.display = 'none';
+  document.getElementById('clear-btn').style.display = 'none';
+
+  const userMsg = `DECISION OR IMPULSE:\n${decision}${pull ? `\n\nWHAT IS PULLING ME TOWARD IT:\n${pull}` : ''}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: buildSystemPrompt(contract),
+        messages: [{ role: 'user', content: userMsg }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    let text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+
+    const verdictEl = document.getElementById('verdict-badge');
+    const match = text.match(/VERDICT:\s*(GO|HOLD|DON['']T|DONT)/i);
+    if (match) {
+      const v = match[1].toUpperCase().replace(/DONT/, "DON'T");
+      verdictEl.textContent = v;
+      verdictEl.className = 'verdict-badge ' + (v === 'GO' ? 'verdict-go' : v === 'HOLD' ? 'verdict-hold' : 'verdict-dont');
+      verdictEl.style.display = 'inline-block';
+      text = text.replace(/VERDICT:\s*(GO|HOLD|DON['']T|DONT)/i, '').trim();
+    } else {
+      verdictEl.style.display = 'none';
+    }
+
+    document.getElementById('response-text').textContent = text || 'The gate did not return a response. Try again.';
+    document.getElementById('response-wrap').style.display = 'block';
+    document.getElementById('clear-btn').style.display = 'inline-block';
+
+    runCount++;
+    ls(STORAGE_KEYS.runCount, String(runCount));
+    updateCounter();
+
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+  } catch(e) {
+    document.getElementById('verdict-badge').style.display = 'none';
+    document.getElementById('response-text').textContent = 'Error: ' + (e.message || 'Could not connect. Check your API key and try again.');
+    document.getElementById('response-wrap').style.display = 'block';
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = 'Run the gate';
+}
+
+function clearGate() {
+  document.getElementById('decision').value = '';
+  document.getElementById('pull').value = '';
+  document.getElementById('response-wrap').style.display = 'none';
+  document.getElementById('clear-btn').style.display = 'none';
+}
+
+function saveContract() {
+  const val = document.getElementById('contract-edit').value;
+  contract = val;
+  ls(STORAGE_KEYS.contract, val);
+  const n = document.getElementById('save-notice');
+  n.textContent = 'Saved.';
+  n.style.display = 'inline';
+  setTimeout(() => { n.style.display = 'none'; }, 2500);
+}
+
+function resetContract() {
+  if (!confirm('Reset to the default contract? Your edits will be lost.')) return;
+  contract = DEFAULT_CONTRACT;
+  document.getElementById('contract-edit').value = DEFAULT_CONTRACT;
+  ls(STORAGE_KEYS.contract, DEFAULT_CONTRACT);
+}
+
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  apiKey = val;
+  ls(STORAGE_KEYS.apiKey, val);
+  const n = document.getElementById('key-notice');
+  n.textContent = val ? 'Key saved.' : 'Cleared.';
+  n.style.display = 'inline';
+  setTimeout(() => { n.style.display = 'none'; }, 2500);
+}
+
+function clearApiKey() {
+  apiKey = '';
+  document.getElementById('api-key-input').value = '';
+  ls(STORAGE_KEYS.apiKey, '');
+  const n = document.getElementById('key-notice');
+  n.textContent = 'Cleared.';
+  n.style.display = 'inline';
+  setTimeout(() => { n.style.display = 'none'; }, 2000);
+}
+
+init();
+</script>
+</body>
+</html>
