@@ -307,6 +307,99 @@
   input:focus { border-color: var(--gold); }
   input::placeholder { color: var(--dim); }
 
+  /* ── Conversation thread ── */
+  .thread-wrap {
+    margin-top: 24px;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+  }
+  .thread-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 16px;
+  }
+  .thread-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .msg { padding: 14px 16px; border-radius: 2px; font-size: 15px; line-height: 1.65; }
+  .msg-user {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    align-self: flex-end;
+    max-width: 92%;
+    font-family: var(--sans);
+  }
+  .msg-gate {
+    background: var(--gold-glow);
+    border-left: 2px solid var(--gold);
+    border-top: 1px solid var(--border2);
+    border-right: 1px solid var(--border2);
+    border-bottom: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--serif);
+    font-size: 18px;
+    line-height: 1.72;
+  }
+  .msg-who {
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: var(--sans);
+    margin-bottom: 7px;
+    font-weight: 500;
+  }
+  .msg-user .msg-who { color: var(--muted); }
+  .msg-gate .msg-who { color: var(--gold); }
+  .thread-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .thread-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.5;
+    padding: 12px 14px;
+    resize: none;
+    outline: none;
+    border-radius: 2px;
+    transition: border-color 0.2s;
+    min-height: 48px;
+    max-height: 120px;
+    -webkit-appearance: none;
+  }
+  .thread-input:focus { border-color: var(--gold); }
+  .thread-input::placeholder { color: var(--dim); font-style: italic; }
+  .thread-send {
+    background: var(--gold);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 13px 18px;
+    border-radius: 1px;
+    flex-shrink: 0;
+    height: 48px;
+    -webkit-appearance: none;
+  }
+  .thread-send:disabled { opacity: 0.35; cursor: not-allowed; }
+  .thread-send:focus { outline: none; }
+
   /* ── About ── */
   .about-body p {
     font-family: var(--serif);
@@ -375,6 +468,14 @@
         <div class="response-label">The mirror</div>
         <div id="verdict-badge" style="display:none"></div>
         <div class="response-text" id="response-text"></div>
+      </div>
+      <div class="thread-wrap">
+        <div class="thread-label">Continue the conversation</div>
+        <div class="thread-messages" id="thread-messages"></div>
+        <div class="thread-input-row">
+          <textarea class="thread-input" id="thread-input" rows="1" placeholder="Add context, push back, ask follow-up..." onkeydown="threadKeydown(event)"></textarea>
+          <button class="thread-send" id="thread-send" onclick="sendThread()">Send</button>
+        </div>
       </div>
     </div>
   </div>
@@ -554,9 +655,16 @@ async function runGate() {
       verdictEl.style.display = 'none';
     }
 
+    const fullGateResponse = (match ? match[1].toUpperCase().replace(/DONT/, "DON'T") + '. ' : '') + (text || '');
     document.getElementById('response-text').textContent = text || 'The gate did not return a response. Try again.';
     document.getElementById('response-wrap').style.display = 'block';
     document.getElementById('clear-btn').style.display = 'inline-block';
+    // seed conversation history with the initial exchange
+    conversationHistory = [
+      { role: 'user', content: userMsg },
+      { role: 'assistant', content: fullGateResponse }
+    ];
+    document.getElementById('thread-messages').innerHTML = '';
 
     runCount++;
     ls(STORAGE_KEYS.runCount, String(runCount));
@@ -574,11 +682,88 @@ async function runGate() {
   btn.innerHTML = 'Run the gate';
 }
 
+// ── Conversation thread ──
+let conversationHistory = [];
+
+function addThreadMessage(role, text) {
+  const container = document.getElementById('thread-messages');
+  const msg = document.createElement('div');
+  msg.className = 'msg ' + (role === 'user' ? 'msg-user' : 'msg-gate');
+  const who = document.createElement('div');
+  who.className = 'msg-who';
+  who.textContent = role === 'user' ? 'You' : 'The mirror';
+  const body = document.createElement('div');
+  body.textContent = text;
+  msg.appendChild(who);
+  msg.appendChild(body);
+  container.appendChild(msg);
+  msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function threadKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendThread();
+  }
+}
+
+async function sendThread() {
+  const input = document.getElementById('thread-input');
+  const text = input.value.trim();
+  if (!text) return;
+  if (!apiKey) { showTab('settings'); alert('Add your Anthropic API key in Settings first.'); return; }
+
+  const sendBtn = document.getElementById('thread-send');
+  sendBtn.disabled = true;
+  sendBtn.textContent = '...';
+  input.value = '';
+
+  conversationHistory.push({ role: 'user', content: text });
+  addThreadMessage('user', text);
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1000,
+        system: buildSystemPrompt(contract),
+        messages: conversationHistory
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'HTTP ' + res.status);
+    }
+
+    const data = await res.json();
+    const reply = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    conversationHistory.push({ role: 'assistant', content: reply });
+    addThreadMessage('gate', reply);
+
+  } catch(e) {
+    addThreadMessage('gate', 'Error: ' + (e.message || 'Could not connect. Try again.'));
+  }
+
+  sendBtn.disabled = false;
+  sendBtn.textContent = 'Send';
+}
+
 function clearGate() {
   document.getElementById('decision').value = '';
   document.getElementById('pull').value = '';
   document.getElementById('response-wrap').style.display = 'none';
   document.getElementById('clear-btn').style.display = 'none';
+  document.getElementById('thread-messages').innerHTML = '';
+  document.getElementById('thread-input').value = '';
+  conversationHistory = [];
 }
 
 function saveContract() {
